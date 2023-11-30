@@ -1,10 +1,10 @@
 const getVideoGames = async () => {
     try {
-      return (await fetch("api/videoGames/")).json();
+      return (await fetch("/api/videoGames/")).json();
     } catch (error) {
       console.log(error);
     }
-  };
+  }
   
   const showVideoGames = async () => {
     let videoGames = await getVideoGames();
@@ -26,9 +26,9 @@ const getVideoGames = async () => {
       a.onclick = (e) => {
         e.preventDefault();
         displayDetails(videoGame);
-      };
-    });
-  };
+      }
+    })
+  }
   
   const displayDetails = (videoGame) => {
     const videoGameDetails = document.getElementById("videoGame-details");
@@ -70,29 +70,69 @@ const getVideoGames = async () => {
       const li = document.createElement("li");
       ul.append(li);
       li.innerHTML = character;
-    });
+    })
   
     eLink.onclick = (e) => {
       e.preventDefault();
       document.querySelector(".dialog").classList.remove("transparent");
       document.getElementById("add-edit-title").innerHTML = "Edit VideoGame";
-    };
+    }
   
     dLink.onclick = (e) => {
       e.preventDefault();
-      //delete videoGame
-    };
+      deleteVideoGame(videoGame);
+    }
   
     populateEditForm(videoGame);
-  };
+  }
+
+  const deleteVideoGame = async (videoGame) => {
+    let response = await fetch(`/api/videoGames/${videoGame._id}`, {
+      method: "DELETE",
+      headers:{
+        "Content-Type": "application/json;charset=utf-8",
+      }
+    })
+
+    if(response.status != 200) {
+      console.log("Error deleting");
+      return;
+    }
+
+    let result = await response.json();
+    showVideoGames();
+    document.getElementById("videoGame-details").innerHTML = "";
+    resetForm();
+  }
   
-  const populateEditForm = (videoGame) => {};
+  const populateEditForm = (videoGame) => {
+    const form = document.getElementById("add-edit-videoGame-form");
+    form._id.value = videoGame._id;
+    form.name.value = videoGame.name;
+    form.year.value = videoGame.year;
+    form.rating.value = videoGame.rating;
+    form.price.value = videoGame.price;
+
+    populateCharacters(videoGame.characters);
+
+  }
+
+  const populateCharacters = (characters) => {
+    const section = document.getElementById("character-boxes");
+    characters.forEach((character) =>{
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = character;
+      section.append(input);
+    })
+  }
   
   const addEditVideoGame = async (e) => {
     e.preventDefault();
 
     const form = document.getElementById("add-edit-videoGame-form");
     const formData = new FormData(form);
+    formData.delete("img");
     formData.append("characters", getCharacters());
 
     let response;
@@ -104,17 +144,30 @@ const getVideoGames = async () => {
         method: "POST",
         body: formData,
       })
+    }else{
+      response = await fetch(`/api/videoGames/${form._id.value}`,{
+        method: "PUT",
+        body: formData,
+      })
     }
+
+
 
     if(response.status !=200){
       console.log("Error contacting server");
       return;
     }
 
+    videoGame = await response.json();
+
+    if (form._id.value != -1){
+      displayDetails(videoGame);
+    }
+
     document.querySelector(".dialog").classList.add("transparent");
     resetForm();
     showVideoGames();
-  };
+  }
 
   const getCharacters = () => {
     const inputs = document.querySelectorAll("#character-boxes input");
@@ -132,14 +185,14 @@ const getVideoGames = async () => {
     form.reset();
     form._id = "-1";
     document.getElementById("character-boxes").innerHTML = "";
-  };
+  }
   
   const showHideAdd = (e) => {
     e.preventDefault();
     document.querySelector(".dialog").classList.remove("transparent");
     document.getElementById("add-edit-title").innerHTML = "Add VideoGame";
     resetForm();
-  };
+  }
   
 const addCharacter = (e) => {
   e.preventDefault();
@@ -156,7 +209,7 @@ const addCharacter = (e) => {
   
     document.querySelector(".close").onclick = () => {
       document.querySelector(".dialog").classList.add("transparent");
-    };
+    }
 
     document.getElementById("add-character").onclick = addCharacter;
-  };
+  }
